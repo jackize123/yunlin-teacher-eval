@@ -698,7 +698,7 @@ export default function App() {
     }
   };
 
-  const generateExcel = (data) => {
+  const generateExcel = (data, options = {}) => {
     const escapeXml = (unsafe) => {
       if (!unsafe) return '';
       return String(unsafe).replace(/[<>&'"]/g, function (c) {
@@ -757,17 +757,23 @@ export default function App() {
       return sheetXml;
     };
 
-    xml += buildWorksheet("全縣總表", data);
+    if (options.singleSheetName) {
+      // 各校後台：只匯出單一、以校名命名的工作表，僅含該校資料
+      xml += buildWorksheet(options.singleSheetName, data);
+    } else {
+      // 大數據總後台：全縣總表 + 各分區總表 + 各校分頁
+      xml += buildWorksheet("全縣總表", data);
 
-    const zones = [...new Set(data.map(d => d.zone))];
-    zones.forEach(z => {
-      if(z) xml += buildWorksheet(`${z}總表`, data.filter(d => d.zone === z));
-    });
+      const zones = [...new Set(data.map(d => d.zone))];
+      zones.forEach(z => {
+        if(z) xml += buildWorksheet(`${z}總表`, data.filter(d => d.zone === z));
+      });
 
-    const schools = [...new Set(data.map(d => d.schoolName))];
-    schools.forEach(s => {
-      if(s) xml += buildWorksheet(s, data.filter(d => d.schoolName === s));
-    });
+      const schools = [...new Set(data.map(d => d.schoolName))];
+      schools.forEach(s => {
+        if(s) xml += buildWorksheet(s, data.filter(d => d.schoolName === s));
+      });
+    }
 
     xml += `\n</Workbook>`;
 
@@ -775,7 +781,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `雲林縣數位教學評估大數據_${new Date().getTime()}.xls`;
+    a.download = `${options.fileName || '雲林縣數位教學評估大數據'}_${new Date().getTime()}.xls`;
     a.click();
   };
 
@@ -1079,7 +1085,13 @@ export default function App() {
                     <h2 className="font-black text-2xl flex items-center gap-2 text-teal-900">{YUNLIN_SCHOOLS.find(s=>s.code===schoolAdminSchoolCode)?.name} 專屬看板</h2>
                     <p className="opacity-80 text-sm mt-1 text-slate-500">掌握校內教師數位教學熟悉度與研習需求</p>
                   </div>
-                  <button onClick={() => generateExcel(uniqueLatestAssessments.filter(a => a.schoolCode === schoolAdminSchoolCode))} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow transition">
+                  <button onClick={() => {
+                    const schoolName = YUNLIN_SCHOOLS.find(s=>s.code===schoolAdminSchoolCode)?.name || '本校';
+                    generateExcel(
+                      uniqueLatestAssessments.filter(a => a.schoolCode === schoolAdminSchoolCode),
+                      { singleSheetName: schoolName, fileName: `${schoolName}_數位教學評估` }
+                    );
+                  }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow transition">
                     <Download size={18}/> 匯出本校大數據 (Excel)
                   </button>
                 </div>
