@@ -565,9 +565,24 @@ export default function App() {
     if (currentTeacherHistory.length > 0) {
       const latest = currentTeacherHistory[currentTeacherHistory.length - 1];
       setScores(latest.scores || {});
-      setQualitative(latest.qualitative || { currentStatus: [], painPoints: [], supportPlans: [] });
-      setSoftwareChecks(latest.softwareChecks || { C1: [], C2: [], C3: [], C4: [] });
-      setSoftwareOthers(latest.softwareOthers || { C1: '', C2: '', C3: '', C4: '' });
+      // 防呆：舊版資料可能缺少部分欄位，統一補齊成完整結構，避免渲染時讀取 undefined 而當掉
+      setQualitative({
+        currentStatus: latest.qualitative?.currentStatus || latest.qualitative?.selfAnalysis || [],
+        painPoints: latest.qualitative?.painPoints || [],
+        supportPlans: latest.qualitative?.supportPlans || latest.qualitative?.supportNeeds || [],
+      });
+      setSoftwareChecks({
+        C1: latest.softwareChecks?.C1 || [],
+        C2: latest.softwareChecks?.C2 || [],
+        C3: latest.softwareChecks?.C3 || [],
+        C4: latest.softwareChecks?.C4 || [],
+      });
+      setSoftwareOthers({
+        C1: latest.softwareOthers?.C1 || '',
+        C2: latest.softwareOthers?.C2 || '',
+        C3: latest.softwareOthers?.C3 || '',
+        C4: latest.softwareOthers?.C4 || '',
+      });
       setModalMessage({ text: "身分載入成功！已為您自動帶入上一次的評估紀錄。", type: "success" });
     } else {
       setScores({});
@@ -986,8 +1001,8 @@ export default function App() {
                     <div className="space-y-3 px-2">
                       {QUALITATIVE_OPTS.currentStatus.map(opt => (
                         <label key={opt} className="flex items-start gap-3 cursor-pointer group">
-                          <input type="checkbox" checked={qualitative.currentStatus.includes(opt)} onChange={(e)=>{
-                            setQualitative(p => ({...p, currentStatus: e.target.checked ? [...p.currentStatus, opt] : p.currentStatus.filter(x => x !== opt)}));
+                          <input type="checkbox" checked={(qualitative.currentStatus || []).includes(opt)} onChange={(e)=>{
+                            setQualitative(p => ({...p, currentStatus: e.target.checked ? [...(p.currentStatus || []), opt] : (p.currentStatus || []).filter(x => x !== opt)}));
                           }} className="mt-1 rounded text-teal-600 focus:ring-teal-500 w-5 h-5 cursor-pointer" />
                           <span className="text-sm text-slate-700 leading-relaxed group-hover:text-teal-700 transition">{opt}</span>
                         </label>
@@ -1000,8 +1015,8 @@ export default function App() {
                     <div className="space-y-3 px-2">
                       {QUALITATIVE_OPTS.painPoints.map(opt => (
                         <label key={opt} className="flex items-start gap-3 cursor-pointer group">
-                          <input type="checkbox" checked={qualitative.painPoints.includes(opt)} onChange={(e)=>{
-                            setQualitative(p => ({...p, painPoints: e.target.checked ? [...p.painPoints, opt] : p.painPoints.filter(x => x !== opt)}));
+                          <input type="checkbox" checked={(qualitative.painPoints || []).includes(opt)} onChange={(e)=>{
+                            setQualitative(p => ({...p, painPoints: e.target.checked ? [...(p.painPoints || []), opt] : (p.painPoints || []).filter(x => x !== opt)}));
                           }} className="mt-1 rounded text-teal-600 focus:ring-teal-500 w-5 h-5 cursor-pointer" />
                           <span className="text-sm text-slate-700 leading-relaxed group-hover:text-teal-700 transition">{opt}</span>
                         </label>
@@ -1014,8 +1029,8 @@ export default function App() {
                     <div className="space-y-3 px-2">
                       {QUALITATIVE_OPTS.supportPlans.map(opt => (
                         <label key={opt} className="flex items-start gap-3 cursor-pointer group">
-                          <input type="checkbox" checked={qualitative.supportPlans.includes(opt)} onChange={(e)=>{
-                            setQualitative(p => ({...p, supportPlans: e.target.checked ? [...p.supportPlans, opt] : p.supportPlans.filter(x => x !== opt)}));
+                          <input type="checkbox" checked={(qualitative.supportPlans || []).includes(opt)} onChange={(e)=>{
+                            setQualitative(p => ({...p, supportPlans: e.target.checked ? [...(p.supportPlans || []), opt] : (p.supportPlans || []).filter(x => x !== opt)}));
                           }} className="mt-1 rounded text-teal-600 focus:ring-teal-500 w-5 h-5 cursor-pointer" />
                           <span className="text-sm text-slate-700 leading-relaxed group-hover:text-teal-700 transition">{opt}</span>
                         </label>
