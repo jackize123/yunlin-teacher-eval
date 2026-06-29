@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { 
-  LineChart, Line, ResponsiveContainer 
-} from 'recharts';
-import { 
+import {
   BookOpen, CheckCircle2, ChevronRight, Download, Home, 
   LogOut, AlertCircle, TrendingUp, Search, School, Sparkles, X,
   PlayCircle, Presentation, ExternalLink, ZoomIn
@@ -554,6 +551,28 @@ export default function App() {
       .sort((a, b) => a.attemptNumber - b.attemptNumber);
   }, [teacherId, teacherName, selectedSchoolCode, allAssessments]);
 
+  // 即時計算四大維度平均（隨作答即時更新）
+  const liveAverages = useMemo(() => {
+    const dims = ['A', 'B', 'C', 'D'];
+    const result = {};
+    const dimAvgs = [];
+    let answeredTotal = 0;
+    dims.forEach(d => {
+      const vals = [1, 2, 3, 4, 5]
+        .map(n => scores[d + n])
+        .filter(v => typeof v === 'number');
+      const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+      result[d] = { avg: parseFloat(avg.toFixed(2)), answered: vals.length };
+      answeredTotal += vals.length;
+      if (vals.length === 5) dimAvgs.push(avg);
+    });
+    result.total = dimAvgs.length === 4
+      ? parseFloat((dimAvgs.reduce((a, b) => a + b, 0) / 4).toFixed(2))
+      : null;
+    result.answeredTotal = answeredTotal;
+    return result;
+  }, [scores]);
+
   const handleVerifyProfile = () => {
     if (!selectedLevel || !selectedDomain || !selectedZone || !selectedSchoolCode || !teacherName.trim() || !teacherId.trim()) {
       setModalMessage({ text: "請填寫完整資訊，包含教育階段、任教領域與分區！", type: "error" });
@@ -932,12 +951,9 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-4">
                     {currentTeacherHistory.length > 0 && (
-                      <div className="h-12 w-24">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={currentTeacherHistory.map((h,i)=>({name:`第${i+1}次`, score: h.totalAverage}))}>
-                            <Line type="monotone" dataKey="score" stroke="#0f766e" strokeWidth={2} dot={{r:3}} />
-                          </LineChart>
-                        </ResponsiveContainer>
+                      <div className="text-center bg-teal-50 border border-teal-100 rounded-xl px-4 py-2">
+                        <div className="text-[11px] text-teal-600 font-bold">上次總平均</div>
+                        <div className="text-2xl font-black text-teal-700 leading-tight">{currentTeacherHistory[currentTeacherHistory.length - 1]?.totalAverage ?? '—'}</div>
                       </div>
                     )}
                     <button onClick={resetFormAndLogout} className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5">
@@ -1045,6 +1061,45 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* 即時四維度平均分數 */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-black text-slate-800 flex items-center gap-2"><TrendingUp size={20} className="text-teal-600"/> 我的即時評估分數</h3>
+                    <span className="text-sm font-bold text-slate-400">已完成 {liveAverages.answeredTotal} / 20 題</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { dim: 'A', label: 'A 大屏操作', color: 'blue' },
+                      { dim: 'B', label: 'B 雙屏協作', color: 'emerald' },
+                      { dim: 'C', label: 'C 平台整合', color: 'purple' },
+                      { dim: 'D', label: 'D 生成式AI', color: 'orange' },
+                    ].map(({ dim, label, color }) => {
+                      const d = liveAverages[dim];
+                      const done = d.answered === 5;
+                      const colorMap = {
+                        blue: 'bg-blue-50 border-blue-100 text-blue-700',
+                        emerald: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+                        purple: 'bg-purple-50 border-purple-100 text-purple-700',
+                        orange: 'bg-orange-50 border-orange-100 text-orange-700',
+                      };
+                      return (
+                        <div key={dim} className={`rounded-xl border p-4 flex flex-col items-center justify-center ${colorMap[color]}`}>
+                          <span className="text-xs font-bold mb-1">{label}</span>
+                          <span className="text-3xl font-black leading-none">{done ? d.avg : '—'}</span>
+                          <span className="text-[11px] mt-1.5 opacity-70 font-bold">{d.answered}/5 題</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 bg-teal-800 rounded-xl p-4 flex items-center justify-between text-white">
+                    <span className="font-bold">總平均分數</span>
+                    <span className="text-3xl font-black">{liveAverages.total ?? '—'}</span>
+                  </div>
+                  {liveAverages.total === null && (
+                    <p className="text-center text-xs text-slate-400 font-bold mt-3">完成全部 20 題後，即可看到您的總平均分數</p>
+                  )}
+                </div>
+
                 <button onClick={handleSubmitAssessment} disabled={isSubmitting} className={`w-full font-black text-lg py-5 rounded-2xl shadow-xl transition transform hover:-translate-y-1 ${isSubmitting ? 'bg-slate-400 text-white cursor-not-allowed' : 'bg-teal-800 hover:bg-teal-900 text-white'}`}>
                   {isSubmitting ? '資料安全寫入中，請稍候...' : '完成評估並送出資料庫'}
                 </button>
@@ -1085,15 +1140,25 @@ export default function App() {
                     <h2 className="font-black text-2xl flex items-center gap-2 text-teal-900">{YUNLIN_SCHOOLS.find(s=>s.code===schoolAdminSchoolCode)?.name} 專屬看板</h2>
                     <p className="opacity-80 text-sm mt-1 text-slate-500">掌握校內教師數位教學熟悉度與研習需求</p>
                   </div>
-                  <button onClick={() => {
-                    const schoolName = YUNLIN_SCHOOLS.find(s=>s.code===schoolAdminSchoolCode)?.name || '本校';
-                    generateExcel(
-                      uniqueLatestAssessments.filter(a => a.schoolCode === schoolAdminSchoolCode),
-                      { singleSheetName: schoolName, fileName: `${schoolName}_數位教學評估` }
-                    );
-                  }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow transition">
-                    <Download size={18}/> 匯出本校大數據 (Excel)
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => {
+                      const schoolName = YUNLIN_SCHOOLS.find(s=>s.code===schoolAdminSchoolCode)?.name || '本校';
+                      generateExcel(
+                        uniqueLatestAssessments.filter(a => a.schoolCode === schoolAdminSchoolCode),
+                        { singleSheetName: schoolName, fileName: `${schoolName}_數位教學評估` }
+                      );
+                    }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow transition">
+                      <Download size={18}/> 匯出本校大數據 (Excel)
+                    </button>
+                    <button onClick={() => {
+                      setIsSchoolAdminLoggedIn(false);
+                      setSchoolAdminZone('');
+                      setSchoolAdminSchoolCode('');
+                      setSchoolAdminPassword('');
+                    }} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
+                      登出 <LogOut size={16}/>
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-x-auto">
                   <table className="w-full text-left text-sm">
