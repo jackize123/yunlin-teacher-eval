@@ -808,17 +808,16 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-16">
       {/* 導覽列 */}
       <nav className="bg-teal-900 text-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
-            <School className="text-teal-400" />
-            <span className="font-black text-xl tracking-wide hidden sm:block">雲林縣教師數位教學評估系統</span>
-            <span className="font-black text-xl tracking-wide sm:hidden">雲林縣數位評估</span>
+        <div className="max-w-7xl mx-auto px-4 py-2 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => setActiveTab('home')}>
+            <School className="text-teal-400 shrink-0" size={22} />
+            <span className="font-black text-base sm:text-xl tracking-wide whitespace-nowrap">雲林縣數位教學評估系統</span>
           </div>
-          <div className="flex gap-1 overflow-x-auto no-scrollbar">
-            <button onClick={() => setActiveTab('home')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap ${activeTab === 'home' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Home size={18}/> 首頁</button>
-            <button onClick={() => setActiveTab('assessment')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap ${activeTab === 'assessment' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><BookOpen size={18}/> 教師自評</button>
-            <button onClick={() => setActiveTab('school-admin')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap ${activeTab === 'school-admin' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Search size={18}/> 各校後台</button>
-            <button onClick={() => setActiveTab('super-admin')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap ${activeTab === 'super-admin' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Sparkles size={18}/> 大數據後台</button>
+          <div className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1">
+            <button onClick={() => setActiveTab('home')} className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-sm sm:text-base flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'home' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Home size={18}/> 首頁</button>
+            <button onClick={() => setActiveTab('assessment')} className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-sm sm:text-base flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'assessment' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><BookOpen size={18}/> 教師自評</button>
+            <button onClick={() => setActiveTab('school-admin')} className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-sm sm:text-base flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'school-admin' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Search size={18}/> 各校後台</button>
+            <button onClick={() => setActiveTab('super-admin')} className={`px-3 sm:px-4 py-2 rounded-lg font-bold text-sm sm:text-base flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'super-admin' ? 'bg-teal-800 text-white' : 'hover:bg-teal-800/50 text-teal-100'}`}><Sparkles size={18}/> 大數據後台</button>
           </div>
         </div>
       </nav>
@@ -942,24 +941,18 @@ export default function App() {
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                 
-                <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-teal-800 flex items-center gap-2"><CheckCircle2 size={18}/> 歡迎回來，{teacherName} 老師</h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {currentTeacherHistory.length > 0 ? `您先前已填報過 ${currentTeacherHistory.length} 次，系統已帶入您的客觀分數紀錄。` : '這是您的首次填報，請依據真實狀況勾選。'}
+                <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-teal-200 flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-teal-800 flex items-center gap-2"><CheckCircle2 size={18} className="shrink-0"/> 歡迎回來，{teacherName} 老師</h3>
+                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                      {currentTeacherHistory.length > 0
+                        ? `您先前已填報過 ${currentTeacherHistory.length} 次，上次總平均 ${currentTeacherHistory[currentTeacherHistory.length - 1]?.totalAverage ?? '—'} 分，系統已帶入您的紀錄。`
+                        : '這是您的首次填報，請依據真實狀況勾選。'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {currentTeacherHistory.length > 0 && (
-                      <div className="text-center bg-teal-50 border border-teal-100 rounded-xl px-4 py-2">
-                        <div className="text-[11px] text-teal-600 font-bold">上次總平均</div>
-                        <div className="text-2xl font-black text-teal-700 leading-tight">{currentTeacherHistory[currentTeacherHistory.length - 1]?.totalAverage ?? '—'}</div>
-                      </div>
-                    )}
-                    <button onClick={resetFormAndLogout} className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5">
-                      登出 <LogOut size={14}/>
-                    </button>
-                  </div>
+                  <button onClick={resetFormAndLogout} className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5">
+                    登出 <LogOut size={14}/>
+                  </button>
                 </div>
                 
                 {/* 20 題組區塊 Rendering */}
